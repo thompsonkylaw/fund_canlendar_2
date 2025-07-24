@@ -11,12 +11,25 @@ const Setting = ({ setAppBarColor, onClose, onTestEmail }) => {
     onClose();
   };
 
+const IsProduction = window.root4appSettings?.IsProduction || false;  
+// const [isWhitelisted, setIsWhitelisted] = useState(false);
+ const whitelist = [import.meta.env.VITE_ADMIN_1_EMAIL, import.meta.env.VITE_ADMIN_2_EMAIL];
+ const whitelisted = whitelist.includes(window.root4appSettings?.user_email);
+//  setIsWhitelisted(whitelisted); // Set state first
+
+ console.log("IsProduction=", window.root4appSettings?.IsProduction);
+ console.log("logged in user email=", window.root4appSettings?.user_email);
+ console.log("whitelisted=", whitelisted);
+ const domain = window.root4appSettings?.domain || false;
+  
+  console.log("domain=", domain);
+
   return (
     <>
       <DialogTitle>{t('settings')}</DialogTitle>
       <DialogContent>
         <Box>
-          {colors.map((color) => (
+       {(whitelisted || !IsProduction) &&colors.map((color) => (
             <Button
               key={color}
               onClick={() => handleColorSelect(color)}

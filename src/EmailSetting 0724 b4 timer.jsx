@@ -7,12 +7,10 @@ const EmailSetting = ({
   setEmail,
   numberOfDayAhead,
   setNumberOfDayAhead,
-  reminderTime,
-  setReminderTime,
   disabled,
   hasUnsavedChanges,
   onSave,
-  onTestEmail,
+  onTestEmail, 
   appBarColor,
 }) => {
   const { t } = useTranslation();
@@ -58,49 +56,28 @@ const EmailSetting = ({
             ))}
           </Select>
         </FormControl>
-
-        {/* New Time Input Field */}
-        <TextField
-          fullWidth
-          margin="normal"
-          disabled={disabled}
-          label={t('emailSetting.reminderTime')} // Make sure to add this key to your translation files
-          type="time"
-          value={reminderTime}
-          onChange={(e) => setReminderTime(e.target.value)}
-          InputLabelProps={{
-            shrink: true,
-          }}
-          inputProps={{
-            step: 300, // 5 min
-          }}
-          sx={{
-            '& .MuiInputBase-input': {
-              fontSize: '1.2rem',
-            },
-          }}
-        />
-
         <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center', gap: 2 }}>
           <Button
-            variant="contained"
-            onClick={onSave}
-            disabled={!hasUnsavedChanges}
-            fullWidth
-            sx={{
-              backgroundColor: appBarColor,
-              '&:hover': {
-                backgroundColor: appBarColor,
-                opacity: 0.9,
-              },
-              '&.Mui-disabled': {
-                backgroundColor: 'rgba(0, 0, 0, 0.12)',
-                color: 'rgba(0, 0, 0, 0.26)',
-              },
-            }}
-          >
-            {t('emailSetting.updateButton')}
-          </Button>
+                variant="contained"
+                onClick={onSave}
+                disabled={!hasUnsavedChanges}
+                fullWidth
+                sx={{
+                  // Style when the button is ENABLED
+                  backgroundColor: appBarColor,
+                  '&:hover': {
+                    backgroundColor: appBarColor,
+                    opacity: 0.9,
+                  },
+                  // Style when the button is DISABLED
+                  '&.Mui-disabled': {
+                    backgroundColor: 'rgba(0, 0, 0, 0.12)',
+                    color: 'rgba(0, 0, 0, 0.26)',
+                  },
+                }}
+              >
+                {t('emailSetting.updateButton')}
+              </Button>
         </Box>
       </Box>
     </Box>

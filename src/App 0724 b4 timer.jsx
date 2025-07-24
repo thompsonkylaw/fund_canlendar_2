@@ -27,6 +27,8 @@ const theme = createTheme({
   typography: { fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif' },
 });
 
+
+
 // Define company-to-color mapping
 const companyToColor = {
   "Manulife": '#009739',
@@ -38,13 +40,19 @@ const companyToColor = {
   "FWD": '#e67e22',
 };
 
+
+
 const App = () => {
   const IsProduction = true;
-  const IsWp = false;
+  const IsWp = true;
 
-  // Get domain
+// Get domain
   const domain = window.root4appSettings?.domain || false;
   
+  console.log("domain=", domain);
+  console.log("IsProduction=", window.root4appSettings?.IsProduction);
+ console.log("logged in user email=", window.root4appSettings?.user_email);
+
   // Retrieve saved values from localStorage
   const savedCompany = localStorage.getItem('company');
   const savedColor = localStorage.getItem('appBarColor');
@@ -52,6 +60,7 @@ const App = () => {
   // Determine initial company and color
   let initialCompany;
   let initialColor;
+
 
   if (domain) {
     if (domain === "portal.aimarketings.io") {
@@ -61,21 +70,25 @@ const App = () => {
       initialCompany = "Prudential";
       initialColor = companyToColor["Prudential"];
     }
-  } else if (savedCompany) {
+  } else  if (savedCompany) {
     initialCompany = savedCompany;
     initialColor = savedColor || companyToColor[savedCompany];
-  } else {
-    initialCompany = "Manulife";
-    initialColor = companyToColor["Manulife"];
-  }
-
-  const [company, setCompany] = useState(initialCompany);
+    }
+    else{
+        initialCompany = "Manulife";
+      initialColor = companyToColor["Manulife"];
+    }
+  console.log("initialCompany=",initialCompany)
+  console.log("initialColor=",initialColor)
+   const [company, setCompany] = useState(initialCompany);
   const [appBarColor, setAppBarColor] = useState(initialColor);
+
+
+
   const [wpUserEmail, setWpUserEmail] = useState('');
   const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [numberOfDayAhead, setNumberOfDayAhead] = useState(5);
-  const [reminderTime, setReminderTime] = useState('09:00'); // New state for reminder time
   
   const [outputData1, setOutputData1] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -84,11 +97,8 @@ const App = () => {
   const [selectedFundsForMail, setSelectedFundsForMail] = useState([]);
   const [userData, setUserData] = useState(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  
-  // States to track saved data for changes
   const [savedWpUserEmail, setSavedWpUserEmail] = useState('');
   const [savedNumberOfDayAhead, setSavedNumberOfDayAhead] = useState(null);
-  const [savedReminderTime, setSavedReminderTime] = useState(''); // New state for saved time
   const [savedSelectedFunds, setSavedSelectedFunds] = useState([]);
   const [savedSelectedFundsForMail, setSavedSelectedFundsForMail] = useState([]);
   const [expandedFunds, setExpandedFunds] = useState({});
@@ -161,22 +171,18 @@ const App = () => {
 
   const fetchUserData = async () => {
     try {
-      const serverURL = IsProduction ? import.meta.env.VITE_SERVER_URL : 'http://localhost:7003';
-      const response = await axios.post(`${serverURL}/getUserData`, { wpUserEmail });
+      const serverURL = IsProduction ? import.meta.env.VITE_SERVER_URL  : 'http://localhost:7003';
+      const response = await axios.post(`${serverURL}/getUserData`, { wpUserEmail, numberOfDayAhead });
       const userData = response.data;
       setUserData(userData);
       console.log('User data:', userData);
-      
       const funds = userData.funds || [];
       setSelectedFunds(funds.map((fund) => fund.name));
       setSelectedFundsForMail(funds.filter((fund) => fund.email_date.some((ed) => ed.isEnabled)).map((fund) => fund.name));
       setNumberOfDayAhead(userData.numberOfDayAhead);
-      setReminderTime(userData.reminderTime || '09:00'); // Set reminder time from user data
 
-      // Save initial state to compare for changes
       setSavedWpUserEmail(wpUserEmail);
       setSavedNumberOfDayAhead(userData.numberOfDayAhead);
-      setSavedReminderTime(userData.reminderTime || '09:00'); // Save initial time
       setSavedSelectedFunds(funds.map((fund) => fund.name));
       setSavedSelectedFundsForMail(funds.filter((fund) => fund.email_date.some((ed) => ed.isEnabled)).map((fund) => fund.name));
       setHasUnsavedChanges(false);
@@ -189,29 +195,26 @@ const App = () => {
     if (wpUserEmail) fetchUserData();
   }, [wpUserEmail]);
 
-  // Check for unsaved changes
   useEffect(() => {
     const isChanged =
       wpUserEmail !== savedWpUserEmail ||
       numberOfDayAhead !== savedNumberOfDayAhead ||
-      reminderTime !== savedReminderTime || // Check for time changes
       JSON.stringify(selectedFunds) !== JSON.stringify(savedSelectedFunds) ||
       JSON.stringify(selectedFundsForMail) !== JSON.stringify(savedSelectedFundsForMail);
     setHasUnsavedChanges(isChanged);
-  }, [wpUserEmail, numberOfDayAhead, reminderTime, selectedFunds, selectedFundsForMail, savedWpUserEmail, savedNumberOfDayAhead, savedReminderTime, savedSelectedFunds, savedSelectedFundsForMail]);
+  }, [wpUserEmail, numberOfDayAhead, selectedFunds, selectedFundsForMail, savedWpUserEmail, savedNumberOfDayAhead, savedSelectedFunds, savedSelectedFundsForMail]);
 
   const handleSave = async () => {
     try {
-      const serverURL = IsProduction ? import.meta.env.VITE_SERVER_URL : 'http://localhost:7003';
+      const serverURL = IsProduction ? import.meta.env.VITE_SERVER_URL  : 'http://localhost:7003';
       await axios.post(`${serverURL}/saveUserData`, {
         wpUserEmail,
         numberOfDayAhead,
-        reminderTime, // Send reminder time to backend
         selectedFunds,
         selectedFundsForMail,
       });
       console.log('Settings saved successfully');
-      await fetchUserData(); // Re-fetch data to update saved state
+      await fetchUserData();
     } catch (error) {
       console.error('Failed to save settings:', error);
       alert('Failed to save settings');
@@ -220,7 +223,7 @@ const App = () => {
 
   const handleTestEmail = async () => {
     try {
-      const serverURL = IsProduction ? import.meta.env.VITE_SERVER_URL : 'http://localhost:7003';
+      const serverURL = IsProduction ?  import.meta.env.VITE_SERVER_URL  : 'http://localhost:7003';
       const response = await axios.post(`${serverURL}/sendTestEmail`, { wpUserEmail });
       if (response.status === 200) {
         alert('Test email sent successfully');
@@ -248,7 +251,25 @@ const App = () => {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <AppBar position="static" sx={{ width: '100%', backgroundColor: appBarColor }}>
-        {/* ... existing AppBar code ... */}
+        <Toolbar>
+          <IconButton
+            edge="start"
+            color="inherit"
+            aria-label="back"
+            onClick={() => {
+              if (company === "Manulife") {
+                window.location.href = "https://portal.aimarketings.io/tool-list/";
+              } else if (company === "Prudential") {
+                window.location.href = "https://pru.aimarketings.io/tool-list/";
+              }
+            }}
+          >
+            <ArrowBackIcon />
+          </IconButton>
+          <Typography variant="h6" sx={{ flexGrow: 1, color: 'white' }}>
+            {t('Medical Financial Calculator')}
+          </Typography>
+        </Toolbar>
       </AppBar>
 
       <Container sx={{ mt: 2, mb: 4 }}>
@@ -266,9 +287,10 @@ const App = () => {
                 {outputData1.map((fund) => {
                   const userFund = userData?.funds.find((f) => f.name === fund.name);
                   const emailDates = userFund ? userFund.email_date : [];
+                  console.log('emailDates', emailDates);
                   return (
                     <FundTable
-                      appBarColor={appBarColor}
+                     appBarColor = {appBarColor}
                       key={fund.name}
                       fund={fund}
                       emailDates={emailDates}
@@ -299,13 +321,11 @@ const App = () => {
                 setEmail={setEmail}
                 numberOfDayAhead={numberOfDayAhead}
                 setNumberOfDayAhead={setNumberOfDayAhead}
-                reminderTime={reminderTime}
-                setReminderTime={setReminderTime}
                 disabled={false}
                 hasUnsavedChanges={hasUnsavedChanges}
                 onSave={handleSave}
                 onTestEmail={handleTestEmail}
-                appBarColor={appBarColor}
+                appBarColor = {appBarColor}
               />
             </Card>
             <Box sx={{ mt: 2 }}>

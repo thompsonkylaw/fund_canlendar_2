@@ -9,7 +9,7 @@ const MultiSelectDropdown = ({ selectedItems, onChange }) => {
     '聯博 - 美元收益基金 AA',
     '安聯收益及增長基金AM類 （H2-歐元對沖）收息',
     '富蘭克林入息基金',
-    '測試基金'
+    '測試基金',
   ];
 
   return (
@@ -17,7 +17,7 @@ const MultiSelectDropdown = ({ selectedItems, onChange }) => {
       <Card elevation={1}>
         <CardContent>
           <Box>
-            <Typography variant="body1" component="label" sx={{ display: 'block', mb: 1, fontWeight: 500 }}>
+            <Typography variant="body1" component="label" sx={{ display: 'block', mb: 1, fontWeight: 500 , fontSize: '1.5rem',}}>
               {t('selectFunds')}
             </Typography>
             <Select
@@ -32,6 +32,10 @@ const MultiSelectDropdown = ({ selectedItems, onChange }) => {
                     <Chip
                       key={value}
                       label={value}
+                      sx={{
+                        // Increase font size within the Chip
+                        fontSize: '1.2rem',
+                      }}
                       deleteIcon={
                         <IconButton
                           onMouseDown={(e) => {
