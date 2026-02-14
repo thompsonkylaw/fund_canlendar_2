@@ -1,368 +1,284 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import {
-  ThemeProvider,
-  createTheme,
-  AppBar,
-  Toolbar,
-  IconButton,
-  Typography,
-  Container,
-  Grid,
-  Card,
-  CircularProgress,
-  Box,
-  Alert,
-} from '@mui/material';
-import { ArrowBack as ArrowBackIcon, FlashOnRounded } from '@mui/icons-material';
-import CssBaseline from '@mui/material/CssBaseline';
 import { useTranslation } from 'react-i18next';
+import { 
+  ArrowLeft, 
+  Loader2, 
+  Settings, 
+  Globe, 
+  ListFilter // Icon for the new header
+} from 'lucide-react';
+
 import LanguageSwitch from './LanguageSwitch';
 import MultiSelectDropdown from './MultiSelectDropdown';
 import EmailSetting from './EmailSetting';
 import FundTable from './FundTable';
 
-const theme = createTheme({
-  palette: { primary: { main: '#1976d2' }, secondary: { main: '#dc004e' } },
-  typography: { fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif' },
-});
-
-// Define company-to-color mapping
 const companyToColor = {
-  "Manulife": '#009739',
-  "AIA": '#E4002B',
-  "Sunlife": '#FFCD00',
-  "AXA": '#00008F',
-  "Chubb": '#004A9F',
-  "Prudential": '#ed1b2e',
-  "FWD": '#e67e22',
+  "Manulife": '#009739',
+  "AIA": '#E4002B',
+  "Sunlife": '#FFCD00',
+  "AXA": '#00008F',
+  "Chubb": '#004A9F',
+  "Prudential": '#ed1b2e',
+  "FWD": '#e67e22',
 };
 
 const App = () => {
-  const IsProduction = true;
-  const IsWp = true;
+  const IsProduction = true;
+  const IsWp = true;
+  const { t } = useTranslation();
 
-  // Get domain
-  const domain = window.root4appSettings?.domain || false;
-  
-  // Retrieve saved values from localStorage
-  const savedCompany = localStorage.getItem('company');
-  const savedColor = localStorage.getItem('appBarColor');
+  // --- Domain & Initial Branding Logic ---
+  const domain = window.root4appSettings?.domain || false;
+  const savedCompany = localStorage.getItem('company');
+  const savedColor = localStorage.getItem('appBarColor');
 
-  // Determine initial company and color
-  let initialCompany;
-  let initialColor;
-
-  if (domain) {
+  let initialCompany, initialColor;
+  if (domain) {
     const lowerCaseDomain = domain.toLowerCase();
-    if (lowerCaseDomain === "portal.aimarketings.io" || lowerCaseDomain === "manu.aimarketings.io") {
-      initialCompany = "Manulife";
-      initialColor = companyToColor["Manulife"];
-    } else if (lowerCaseDomain === "pru.aimarketings.io") {
-      initialCompany = "Prudential";
-      initialColor = companyToColor["Prudential"];
-    } else if (lowerCaseDomain === "sunlife.aimarketings.io") {
-        initialCompany = "Sunlife";
-        initialColor = companyToColor["Sunlife"];
-    } else if (lowerCaseDomain === "aia.aimarketings.io") {
-        initialCompany = "AIA";
-        initialColor = companyToColor["AIA"];
-    } else if (lowerCaseDomain === "axa.aimarketings.io") {
-        initialCompany = "AXA";
-        initialColor = companyToColor["AXA"];
-    } else if (lowerCaseDomain === "chubb.aimarketings.io") {
-        initialCompany = "Chubb";
-        initialColor = companyToColor["Chubb"];
-    } else if (lowerCaseDomain === "fwd.aimarketings.io") {
-        initialCompany = "FWD";
-        initialColor = companyToColor["FWD"];
-    } else {
-        // Fallback for an unrecognized but existing domain
-        initialCompany = savedCompany || "Manulife";
-        initialColor = savedColor || companyToColor[initialCompany];
+    const domainMap = {
+      "portal": "Manulife", "manu": "Manulife", "pru": "Prudential",
+      "sunlife": "Sunlife", "aia": "AIA", "axa": "AXA", "chubb": "Chubb", "fwd": "FWD"
+    };
+    const key = Object.keys(domainMap).find(k => lowerCaseDomain.includes(k));
+    initialCompany = domainMap[key] || savedCompany || "Manulife";
+    initialColor = companyToColor[initialCompany];
+  } else {
+    initialCompany = savedCompany || "Manulife";
+    initialColor = savedColor || companyToColor[initialCompany];
+  }
+
+  // --- State Hooks ---
+  const [company, setCompany] = useState(initialCompany);
+  const [appBarColor, setAppBarColor] = useState(initialColor);
+  const [wpUserEmail, setWpUserEmail] = useState('');
+  const [email, setEmail] = useState('');
+  const [numberOfDayAhead, setNumberOfDayAhead] = useState(5);
+  const [reminderTime, setReminderTime] = useState('09:00');
+  const [outputData1, setOutputData1] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [selectedFunds, setSelectedFunds] = useState([]);
+  const [selectedFundsForMail, setSelectedFundsForMail] = useState([]);
+  const [userData, setUserData] = useState(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [expandedFunds, setExpandedFunds] = useState({});
+
+  const [savedWpUserEmail, setSavedWpUserEmail] = useState('');
+  const [savedNumberOfDayAhead, setSavedNumberOfDayAhead] = useState(null);
+  const [savedReminderTime, setSavedReminderTime] = useState('');
+  const [savedSelectedFunds, setSavedSelectedFunds] = useState([]);
+  const [savedSelectedFundsForMail, setSavedSelectedFundsForMail] = useState([]);
+
+  // --- Logic Handlers ---
+  const handleCheckboxChange = (fundName, checked) => {
+    setSelectedFundsForMail((prev) =>
+      checked ? (prev.includes(fundName) ? prev : [...prev, fundName]) : prev.filter((name) => name !== fundName)
+    );
+  };
+
+  const handleSave = async () => {
+    try {
+      const serverURL = IsProduction ? (import.meta.env.VITE_SERVER_URL || 'http://localhost:7003') : 'http://localhost:7003';
+      await axios.post(`${serverURL}/saveUserData`, {
+        wpUserEmail,
+        numberOfDayAhead,
+        reminderTime,
+        selectedFunds,
+        selectedFundsForMail,
+      });
+      await fetchUserData();
+    } catch (error) {
+      console.error('Failed to save settings:', error);
+      alert('Failed to save settings');
     }
-  } else if (savedCompany) {
-    initialCompany = savedCompany;
-    initialColor = savedColor || companyToColor[savedCompany];
-  } else {
-    initialCompany = "Manulife";
-    initialColor = companyToColor["Manulife"];
-  }
+  };
 
-  const [company, setCompany] = useState(initialCompany);
-  const [appBarColor, setAppBarColor] = useState(initialColor);
-  const [wpUserEmail, setWpUserEmail] = useState('');
-  const { t } = useTranslation();
-  const [email, setEmail] = useState('');
-  const [numberOfDayAhead, setNumberOfDayAhead] = useState(5);
-  const [reminderTime, setReminderTime] = useState('09:00'); // New state for reminder time
-  
-  const [outputData1, setOutputData1] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [selectedFunds, setSelectedFunds] = useState([]);
-  const [selectedFundsForMail, setSelectedFundsForMail] = useState([]);
-  const [userData, setUserData] = useState(null);
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  
-  // States to track saved data for changes
-  const [savedWpUserEmail, setSavedWpUserEmail] = useState('');
-  const [savedNumberOfDayAhead, setSavedNumberOfDayAhead] = useState(null);
-  const [savedReminderTime, setSavedReminderTime] = useState(''); // New state for saved time
-  const [savedSelectedFunds, setSavedSelectedFunds] = useState([]);
-  const [savedSelectedFundsForMail, setSavedSelectedFundsForMail] = useState([]);
-  const [expandedFunds, setExpandedFunds] = useState({});
+  const handleTestEmail = async () => {
+    try {
+      const serverURL = IsProduction ? (import.meta.env.VITE_SERVER_URL || 'http://localhost:7003') : 'http://localhost:7003';
+      const response = await axios.post(`${serverURL}/sendTestEmail`, { wpUserEmail });
+      if (response.status === 200) alert('Test email sent successfully');
+    } catch (error) {
+      alert('Error sending test email');
+    }
+  };
 
-  const handleChange = (event) => {
-    setSelectedFunds(event.target.value);
-  };
+  const fetchUserData = async () => {
+    if (!wpUserEmail) return;
+    try {
+      const serverURL = IsProduction ? (import.meta.env.VITE_SERVER_URL || 'http://localhost:7003') : 'http://localhost:7003';
+      const response = await axios.post(`${serverURL}/getUserData`, { wpUserEmail });
+      const data = response.data;
+      setUserData(data);
+      
+      const fundNames = data.funds.map(f => f.name);
+      setSelectedFunds(fundNames);
+      const mailFunds = data.funds.filter(f => f.email_date.some(ed => ed.isEnabled)).map(f => f.name);
+      setSelectedFundsForMail(mailFunds);
+      setNumberOfDayAhead(data.numberOfDayAhead);
+      setReminderTime(data.reminderTime || '09:00');
 
-  const handleCheckboxChange = (fundName, checked) => {
-    setSelectedFundsForMail((prev) =>
-      checked ? (prev.includes(fundName) ? prev : [...prev, fundName]) : prev.filter((name) => name !== fundName)
-    );
-  };
+      setSavedWpUserEmail(wpUserEmail);
+      setSavedNumberOfDayAhead(data.numberOfDayAhead);
+      setSavedReminderTime(data.reminderTime || '09:00');
+      setSavedSelectedFunds(fundNames);
+      setSavedSelectedFundsForMail(mailFunds);
+      setHasUnsavedChanges(false);
+    } catch (err) { console.error(err); }
+  };
 
-  useEffect(() => {
-    localStorage.setItem('appBarColor', appBarColor);
-  }, [appBarColor]);
+  // --- Effects ---
+  useEffect(() => {
+    localStorage.setItem('appBarColor', appBarColor);
+    localStorage.setItem('company', company);
+  }, [appBarColor, company]);
 
-  useEffect(() => {
-    localStorage.setItem('company', company);
-  }, [company]);
+  useEffect(() => {
+    const timer = setTimeout(async () => {
+      if (selectedFunds.length === 0) { setOutputData1([]); return; }
+      try {
+        setLoading(true);
+        const serverURL = IsProduction ? (import.meta.env.VITE_SERVER_URL || 'http://localhost:7003') : 'http://localhost:7003';
+        const res = await axios.post(`${serverURL}/getData`, { selectedFunds });
+        setOutputData1(res.data);
+      } catch (err) { setError('Failed to fetch data'); }
+      finally { setLoading(false); }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [selectedFunds]);
 
-  useEffect(() => {
-    localStorage.setItem('email', email);
-  }, [email]);
+  useEffect(() => {
+    if (IsWp && window.root4appSettings) {
+      const fetchWpEmail = async () => {
+        const apiUrl = window.root4appSettings.root + 'myplugin/v1/system-login-name';
+        const res = await axios.get(apiUrl, {
+          headers: { 'X-WP-Nonce': window.root4appSettings.nonce },
+          withCredentials: true,
+        });
+        if (res.data.user_email) {
+          setWpUserEmail(res.data.user_email);
+          setEmail(res.data.user_email);
+        }
+      };
+      fetchWpEmail();
+    } else {
+      setWpUserEmail('thompsonkylaw@gmail.com');
+      setEmail('thompsonkylaw@gmail.com');
+    }
+  }, []);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      const fetchData = async () => {
-        try {
-          setLoading(true);
-          setError(null);
-          const serverURL = IsProduction ? import.meta.env.VITE_SERVER_URL : 'http://localhost:7003';
-          const response = await axios.post(`${serverURL}/getData`, { selectedFunds });
-          setOutputData1(response.data);
-        } catch (err) {
-          setError(err.response?.data?.detail || 'Failed to fetch data for Plan 1');
-        } finally {
-          setLoading(false);
-        }
-      };
-      fetchData();
-    }, 300);
+  useEffect(() => { if (wpUserEmail) fetchUserData(); }, [wpUserEmail]);
 
-    return () => clearTimeout(timer);
-  }, [selectedFunds]);
+  useEffect(() => {
+    const isChanged =
+      wpUserEmail !== savedWpUserEmail ||
+      numberOfDayAhead !== savedNumberOfDayAhead ||
+      reminderTime !== savedReminderTime ||
+      JSON.stringify(selectedFunds) !== JSON.stringify(savedSelectedFunds) ||
+      JSON.stringify(selectedFundsForMail) !== JSON.stringify(savedSelectedFundsForMail);
+    setHasUnsavedChanges(isChanged);
+  }, [wpUserEmail, numberOfDayAhead, reminderTime, selectedFunds, selectedFundsForMail]);
 
-  useEffect(() => {
-    if (IsWp) {
-      const fetchUserEmail = async () => {
-        try {
-          const apiUrl = window.root4appSettings.root + 'myplugin/v1/system-login-name';
-          const response = await axios.get(apiUrl, {
-            headers: { 'X-WP-Nonce': window.root4appSettings.nonce },
-            withCredentials: true,
-          });
-          if (response.data.user_email) {
-            setWpUserEmail(response.data.user_email);
-            setEmail(response.data.user_email);
-          } else {
-            console.error('User email not found in API response');
-          }
-        } catch (error) {
-          console.error('Failed to fetch user email:', error);
-        }
-      };
-      fetchUserEmail();
-    } else {
-      setEmail('thompsonkylaw@gmail.com');
-      setWpUserEmail('thompsonkylaw@gmail.com');
-      console.log('Running in non-production mode, using default email');
-    }
-  }, []);
+  const handleBackNavigation = () => {
+    const hostname = window.location.hostname;
+    const paths = ['portal', 'pru', 'sunlife', 'aia', 'axa', 'chubb', 'fwd', 'tool'];
+    const match = paths.find(p => hostname.includes(p));
+    window.location.href = match ? `https://${match}.aimarketings.io/tool-list` : "#";
+  };
 
-  const fetchUserData = async () => {
-    try {
-      const serverURL = IsProduction ? import.meta.env.VITE_SERVER_URL : 'http://localhost:7003';
-      const response = await axios.post(`${serverURL}/getUserData`, { wpUserEmail });
-      const userData = response.data;
-      setUserData(userData);
-      console.log('User data:', userData);
-      
-      const funds = userData.funds || [];
-      setSelectedFunds(funds.map((fund) => fund.name));
-      setSelectedFundsForMail(funds.filter((fund) => fund.email_date.some((ed) => ed.isEnabled)).map((fund) => fund.name));
-      setNumberOfDayAhead(userData.numberOfDayAhead);
-      setReminderTime(userData.reminderTime || '09:00'); // Set reminder time from user data
+  // --- Inline Styles ---
+  const styles = {
+    wrapper: { minHeight: '100vh', backgroundColor: '#f8fafc', color: '#1e293b', paddingBottom: '40px' },
+    header: { backgroundColor: appBarColor, position: 'sticky', top: 0, zIndex: 50, boxShadow: '0 2px 4px rgba(0,0,0,0.1)' },
+    container: { maxWidth: '1200px', margin: '0 auto', padding: '0 16px' },
+    grid: { display: 'flex', flexWrap: 'wrap', gap: '32px', marginTop: '32px' },
+    card: { backgroundColor: '#ffffff', borderRadius: '16px', border: '1px solid #e2e8f0', padding: '24px', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }
+  };
 
-      // Save initial state to compare for changes
-      setSavedWpUserEmail(wpUserEmail);
-      setSavedNumberOfDayAhead(userData.numberOfDayAhead);
-      setSavedReminderTime(userData.reminderTime || '09:00'); // Save initial time
-      setSavedSelectedFunds(funds.map((fund) => fund.name));
-      setSavedSelectedFundsForMail(funds.filter((fund) => fund.email_date.some((ed) => ed.isEnabled)).map((fund) => fund.name));
-      setHasUnsavedChanges(false);
-    } catch (error) {
-      console.error('Failed to fetch user data:', error);
-    }
-  };
+  return (
+    <div style={styles.wrapper}>
+      <header style={styles.header}>
+        <div style={{ ...styles.container, height: '64px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <button onClick={handleBackNavigation} style={{ background: 'rgba(0,0,0,0.1)', border: 'none', borderRadius: '50%', padding: '8px', cursor: 'pointer', color: company === 'Sunlife' ? '#003946' : 'white' }}>
+            <ArrowLeft size={24} />
+          </button>
+          <h1 style={{ margin: 0, fontSize: '20px', fontWeight: 700, color: company === 'Sunlife' ? '#003946' : 'white' }}>
+            {t('Medical Financial Calculator')}
+          </h1>
+        </div>
+      </header>
 
-  useEffect(() => {
-    if (wpUserEmail) fetchUserData();
-  }, [wpUserEmail]);
+      <main style={styles.container}>
+        <div style={styles.grid}>
+          {/* Main Content */}
+          <div style={{ flex: '1 1 600px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            
+            {/* NEW: Removed Card Container & Added Header */}
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+                <div style={{ padding: '8px', backgroundColor: '#e2e8f0', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <ListFilter size={20} color="#475569" />
+                </div>
+                <label style={{ fontSize: '16px', fontWeight: 700, color: '#334155' }}>
+                  {t('Select Funds')}
+                </label>
+              </div>
+              
+              <MultiSelectDropdown selectedItems={selectedFunds} onChange={(e) => setSelectedFunds(e.target.value)} />
+            </div>
 
-  // Check for unsaved changes
-  useEffect(() => {
-    const isChanged =
-      wpUserEmail !== savedWpUserEmail ||
-      numberOfDayAhead !== savedNumberOfDayAhead ||
-      reminderTime !== savedReminderTime || // Check for time changes
-      JSON.stringify(selectedFunds) !== JSON.stringify(savedSelectedFunds) ||
-      JSON.stringify(selectedFundsForMail) !== JSON.stringify(savedSelectedFundsForMail);
-    setHasUnsavedChanges(isChanged);
-  }, [wpUserEmail, numberOfDayAhead, reminderTime, selectedFunds, selectedFundsForMail, savedWpUserEmail, savedNumberOfDayAhead, savedReminderTime, savedSelectedFunds, savedSelectedFundsForMail]);
+            {loading ? (
+              <div style={{ textAlign: 'center', padding: '60px' }}>
+                <Loader2 size={40} style={{ animation: 'spin 1s linear infinite' }} color={appBarColor} />
+              </div>
+            ) : outputData1.length > 0 ? (
+              outputData1.map(fund => (
+                <FundTable
+                  key={fund.name}
+                  appBarColor={appBarColor}
+                  fund={fund}
+                  emailDates={userData?.funds.find(f => f.name === fund.name)?.email_date || []}
+                  isChecked={selectedFundsForMail.includes(fund.name)}
+                  onCheckboxChange={handleCheckboxChange}
+                  isExpanded={expandedFunds[fund.name]}
+                  onToggleExpand={() => setExpandedFunds(p => ({ ...p, [fund.name]: !p[fund.name] }))}
+                />
+              ))
+            ) : <div style={{ textAlign: 'center', padding: '60px', background: '#f1f5f9', borderRadius: '16px', border: '2px dashed #cbd5e1', color: '#64748b' }}>{t('pleaseSelectFund')}</div>}
+          </div>
 
-  const handleSave = async () => {
-    try {
-      const serverURL = IsProduction ? import.meta.env.VITE_SERVER_URL : 'http://localhost:7003';
-      await axios.post(`${serverURL}/saveUserData`, {
-        wpUserEmail,
-        numberOfDayAhead,
-        reminderTime, // Send reminder time to backend
-        selectedFunds,
-        selectedFundsForMail,
-      });
-      console.log('Settings saved successfully');
-      await fetchUserData(); // Re-fetch data to update saved state
-    } catch (error) {
-      console.error('Failed to save settings:', error);
-      alert('Failed to save settings');
-    }
-  };
+          {/* Sidebar */}
+          <div style={{ flex: '1 1 300px' }}>
+            <div style={{ position: 'sticky', top: '96px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+              <div style={{ ...styles.card, padding: 0, overflow: 'hidden' }}>
+                <div style={{ background: '#f8fafc', padding: '12px 24px', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Settings size={16} color="#475569" />
+                  <span style={{ fontSize: '11px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Configuration</span>
+                </div>
+                <div style={{ padding: '24px' }}>
+                  <EmailSetting 
+                    email={email} setEmail={setEmail} 
+                    numberOfDayAhead={numberOfDayAhead} setNumberOfDayAhead={setNumberOfDayAhead}
+                    reminderTime={reminderTime} setReminderTime={setReminderTime}
+                    hasUnsavedChanges={hasUnsavedChanges} onSave={handleSave} onTestEmail={handleTestEmail}
+                    appBarColor={appBarColor} 
+                  />
+                </div>
+              </div>
+              <div style={{ ...styles.card, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 24px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#475569' }}><Globe size={18} /><span style={{ fontSize: '14px', fontWeight: 500 }}>Preferences</span></div>
+                <LanguageSwitch setAppBarColor={setAppBarColor} setCompany={setCompany} appBarColor={appBarColor} />
+              </div>
+            </div>
+          </div>
+        </div>
+       </main>
 
-  const handleTestEmail = async () => {
-    try {
-      const serverURL = IsProduction ? import.meta.env.VITE_SERVER_URL : 'http://localhost:7003';
-      const response = await axios.post(`${serverURL}/sendTestEmail`, { wpUserEmail });
-      if (response.status === 200) {
-        alert('Test email sent successfully');
-      } else {
-        alert('Failed to send test email');
-      }
-    } catch (error) {
-      console.error('Error sending test email:', error);
-      alert('Error sending test email');
-    }
-  };
-
-  useEffect(() => {
-    const handleBeforeUnload = (event) => {
-      if (hasUnsavedChanges) {
-        event.preventDefault();
-        event.returnValue = 'Are you sure you want to leave before saving your changes?';
-      }
-    };
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [hasUnsavedChanges]);
-
-  return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <AppBar position="static" sx={{ width: '100%', backgroundColor: appBarColor }}>
-        <Toolbar>
-                  <IconButton
-                    edge="start"
-                    color="inherit"
-                    aria-label="back"
-                     onClick={() => {
-                            const hostname = window.location.hostname;
-                            if (hostname.includes('portal')) window.location.href = "https://portal.aimarketings.io/tool-list";
-                            else if (hostname.includes('pru')) window.location.href = "https://pru.aimarketings.io/tool-list";
-                            else if (hostname.includes('sunlife')) window.location.href = "https://sunlife.aimarketings.io/tool-list";
-                            else if (hostname.includes('aia')) window.location.href = "https://aia.aimarketings.io/tool-list";
-                            else if (hostname.includes('axa')) window.location.href = "https://axa.aimarketings.io/tool-list";
-                            else if (hostname.includes('chubb')) window.location.href = "https://chubb.aimarketings.io/tool-list";
-                            else if (hostname.includes('fwd')) window.location.href = "https://fwd.aimarketings.io/tool-list";
-                            else if (hostname.includes('tool')) window.location.href = "https://tool.aimarketings.io/tool-list";
-                        }}
-                  sx={{ color: company === 'Sunlife' ? '#003946' : 'inherit' }}
-            >
-                    <ArrowBackIcon />
-                  </IconButton>
-                  <Typography variant="h6" sx={{ flexGrow: 1, color: company === 'Sunlife' ? '#003946' : 'white'  }}>
-                    {t('Medical Financial Calculator')}
-                  </Typography>
-                </Toolbar>
-      </AppBar>
-
-      <Container sx={{ mt: 2, mb: 4 }}>
-        <Grid container spacing={3}>
-          <Grid item xs={12} md={8}>
-            <MultiSelectDropdown selectedItems={selectedFunds} onChange={handleChange} />
-            {loading ? (
-              <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-                <CircularProgress />
-              </Box>
-            ) : error ? (
-              <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>
-            ) : outputData1.length > 0 ? (
-              <Box sx={{ mt: 4 }}>
-                {outputData1.map((fund) => {
-                  const userFund = userData?.funds.find((f) => f.name === fund.name);
-                  const emailDates = userFund ? userFund.email_date : [];
-                  return (
-                    <FundTable
-                      appBarColor={appBarColor}
-                      key={fund.name}
-                      fund={fund}
-                      emailDates={emailDates}
-                      isChecked={selectedFundsForMail.includes(fund.name)}
-                      onCheckboxChange={handleCheckboxChange}
-                      isExpanded={expandedFunds[fund.name] || false}
-                      onToggleExpand={() =>
-                        setExpandedFunds((prev) => ({
-                          ...prev,
-                          [fund.name]: !prev[fund.name],
-                        }))
-                      }
-                    />
-                  );
-                })}
-              </Box>
-            ) : (
-              <Typography variant="body1" sx={{ mt: 2 }}>
-                {t('pleaseSelectFund')}
-              </Typography>
-            )}
-          </Grid>
-
-          <Grid item xs={12} md={4}>
-            <Card elevation={3} sx={{ p: 2 }}>
-              <EmailSetting
-                email={email}
-                setEmail={setEmail}
-                numberOfDayAhead={numberOfDayAhead}
-                setNumberOfDayAhead={setNumberOfDayAhead}
-                reminderTime={reminderTime}
-                setReminderTime={setReminderTime}
-                disabled={false}
-                hasUnsavedChanges={hasUnsavedChanges}
-                onSave={handleSave}
-                onTestEmail={handleTestEmail}
-                appBarColor={appBarColor}
-              />
-            </Card>
-            <Box sx={{ mt: 2 }}>
-              <LanguageSwitch setAppBarColor={setAppBarColor} setCompany={setCompany} appBarColor={appBarColor} onTestEmail={handleTestEmail} />
-            </Box>
-          </Grid>
-        </Grid>
-      </Container>
-    </ThemeProvider>
-  );
+      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+    </div>
+  );
 };
 
 export default App;

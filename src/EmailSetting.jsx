@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Box, Button, TextField, Typography, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
+import { Save, Mail, Clock, Calendar } from 'lucide-react';
 
 const EmailSetting = ({
   email,
@@ -17,95 +17,164 @@ const EmailSetting = ({
 }) => {
   const { t } = useTranslation();
 
+  // Determine text color based on branding (Sunlife yellow case)
+  const isYellow = appBarColor === '#FFCD00';
+  const buttonTextColor = isYellow ? '#003946' : '#ffffff';
+
+  // Common Label Style
+  const labelStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    fontSize: '14px',
+    fontWeight: '500',
+    color: '#475569', // slate-600
+    marginBottom: '6px'
+  };
+
+  // Common Input Style
+  const inputStyle = {
+    width: '100%',
+    padding: '10px 16px',
+    fontSize: '16px',
+    borderRadius: '8px',
+    border: '1px solid #cbd5e1',
+    backgroundColor: '#ffffff',
+    color: '#1e293b', // slate-800
+    outline: 'none',
+    boxSizing: 'border-box'
+  };
+
   return (
-    <Box sx={{ mb: 2 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-        <Typography variant="h6" sx={{ fontWeight: 600 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      {/* Header */}
+      <div style={{ marginBottom: '8px' }}>
+        <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#1e293b', margin: 0 }}>
           {t('emailSetting.title')}
-        </Typography>
-      </Box>
-      <Box sx={{ border: '1px solid #e0e0e0', borderRadius: 1, p: 2 }}>
-        <TextField
-          fullWidth
-          label={t('emailSetting.email')}
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          variant="outlined"
-          margin="normal"
-          disabled={true}
-          sx={{
-            '& .MuiInputBase-input': {
-              fontSize: '1.2rem',
-            },
-          }}
-        />
-        <FormControl fullWidth margin="normal" disabled={disabled}>
-          <InputLabel>{t('emailSetting.numberOfDaysAhead')}</InputLabel>
-          <Select
-            value={numberOfDayAhead}
-            onChange={(e) => setNumberOfDayAhead(Number(e.target.value))}
-            sx={{ fontSize: '1.2rem' }}
-          >
-            {[...Array(11)].map((_, i) => (
-              <MenuItem
-                key={i}
-                value={i}
-                sx={{ fontSize: '1.2rem' }}
-              >
-                {i}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+        </h3>
+      </div>
 
-        {/* New Time Input Field */}
-        <TextField
-          fullWidth
-          margin="normal"
-          disabled={disabled}
-          label={t('emailSetting.reminderTime')} // Make sure to add this key to your translation files
-          type="time"
-          value={reminderTime}
-          onChange={(e) => setReminderTime(e.target.value)}
-          InputLabelProps={{
-            shrink: true,
-          }}
-          inputProps={{
-            step: 300, // 5 min
-          }}
-          sx={{
-            '& .MuiInputBase-input': {
-              fontSize: '1.2rem',
-              
-            },
-          }}
-        />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        
+        {/* Email Field (Read Only) */}
+        <div>
+          <label style={labelStyle}>
+            <Mail size={14} /> {t('emailSetting.email')}
+          </label>
+          <input
+            type="email"
+            value={email}
+            readOnly
+            disabled
+            style={{ 
+              ...inputStyle, 
+              backgroundColor: '#f8fafc', 
+              color: '#64748b', 
+              cursor: 'not-allowed',
+              border: '1px solid #e2e8f0'
+            }}
+          />
+        </div>
 
-        <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center', gap: 2 }}>
-          <Button
-            variant="contained"
+        {/* Number of Days Ahead Selection */}
+        <div>
+          <label style={labelStyle}>
+            <Calendar size={14} /> {t('emailSetting.numberOfDaysAhead')}
+          </label>
+          <div style={{ position: 'relative' }}>
+            <select
+              value={numberOfDayAhead}
+              disabled={disabled}
+              onChange={(e) => setNumberOfDayAhead(Number(e.target.value))}
+              style={{ 
+                ...inputStyle,
+                appearance: 'none',
+                cursor: disabled ? 'not-allowed' : 'pointer'
+              }}
+            >
+              {[...Array(11)].map((_, i) => (
+                <option key={i} value={i} style={{ backgroundColor: '#ffffff', color: '#1e293b' }}>
+                  {i} {i === 1 ? 'Day' : 'Days'}
+                </option>
+              ))}
+            </select>
+            {/* Custom Arrow for Select */}
+            <div style={{ 
+              position: 'absolute', 
+              right: '12px', 
+              top: '50%', 
+              transform: 'translateY(-50%)', 
+              pointerEvents: 'none',
+              color: '#94a3b8'
+            }}>
+              <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        {/* Reminder Time Input */}
+        <div>
+          <label style={labelStyle}>
+            <Clock size={14} /> {t('emailSetting.reminderTime')}
+          </label>
+          <input
+            type="time"
+            step="300"
+            value={reminderTime}
+            disabled={disabled}
+            onChange={(e) => setReminderTime(e.target.value)}
+            style={{ 
+              ...inputStyle,
+              cursor: disabled ? 'not-allowed' : 'text'
+            }}
+          />
+        </div>
+
+        {/* Update Button */}
+        <div style={{ paddingTop: '8px' }}>
+          <button
             onClick={onSave}
             disabled={!hasUnsavedChanges}
-            fullWidth
-            sx={{
-              color: appBarColor === '#FFCD00' ? '#003946' : 'white' ,
-              backgroundColor: appBarColor,
-              '&:hover': {
-                backgroundColor: appBarColor,
-                opacity: 0.9,
-              },
-              '&.Mui-disabled': {
-                backgroundColor: 'rgba(0, 0, 0, 0.12)',
-                color: 'rgba(0, 0, 0, 0.26)',
-              },
+            style={{
+              width: '100%',
+              padding: '12px 16px',
+              borderRadius: '12px',
+              fontWeight: '700',
+              fontSize: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              border: 'none',
+              cursor: hasUnsavedChanges ? 'pointer' : 'not-allowed',
+              transition: 'all 0.2s ease',
+              backgroundColor: hasUnsavedChanges ? appBarColor : '#f1f5f9',
+              color: hasUnsavedChanges ? buttonTextColor : '#94a3b8',
+              boxShadow: hasUnsavedChanges ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
             }}
           >
+            <Save size={18} />
             {t('emailSetting.updateButton')}
-          </Button>
-        </Box>
-      </Box>
-    </Box>
+          </button>
+          
+          {!hasUnsavedChanges && (
+            <p style={{ 
+              textAlign: 'center', 
+              fontSize: '10px', 
+              color: '#94a3b8', 
+              marginTop: '8px', 
+              textTransform: 'uppercase', 
+              letterSpacing: '0.05em',
+              fontWeight: '600'
+            }}>
+              Settings up to date
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
   );
 };
 

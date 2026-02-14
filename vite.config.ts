@@ -8,27 +8,23 @@
 
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-
+import tailwindcss from '@tailwindcss/vite'
 
 // https://vitejs.dev/config/
-// export default defineConfig({
-//   plugins: [react()],
-// })
-
-//not initial error , but error when hit undo
-// export default {
-//   build: {
-//     minify: false,
-//   },
-// };
-
-export default {
+export default defineConfig({
+  plugins: [
+    react(),
+    tailwindcss(),
+  ],
   build: {
     rollupOptions: {
       output: {
         format: 'umd', // or 'iife'
         name: 'MyApp', // Required for UMD/IIFE; give your app a global name
+        entryFileNames: `assets/[name].js`,
+        chunkFileNames: `assets/[name].js`,
+        assetFileNames: `assets/[name].[ext]`,
       },
     },
   },
-};
+})
