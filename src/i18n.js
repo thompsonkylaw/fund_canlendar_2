@@ -25,6 +25,7 @@ i18next
     resources: {
       en: {
         translation: {
+          
           cash_value: 'Surrender value after withdrawal',
           Failed_to_fetch_system_login_name: 'Failed to fetch system login name',
           Both_login_name_fields_are_required: 'Both login name fields are required',
@@ -196,6 +197,7 @@ i18next
             email: 'Email',
             numberOfDaysAhead: 'Number of Days Ahead',
             updateButton: 'Update',
+            reminderTime: 'Email Reminder Time',
           },
         }
       },
@@ -372,6 +374,7 @@ i18next
             email: '電郵',
             numberOfDaysAhead: '提前天數',
             updateButton: '更新',
+            reminderTime: '電郵發出時間',
           },
         }
       },
@@ -548,6 +551,7 @@ i18next
             email: '电邮',
             numberOfDaysAhead: '提前天数',
             updateButton: '更新',
+            reminderTime: '电邮发出时间',
           },
         }
       }

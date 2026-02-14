@@ -2,12 +2,32 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { DialogTitle, DialogContent, DialogActions, Button, Box } from '@mui/material';
 
-const Setting = ({ setAppBarColor, onClose, onTestEmail }) => {
+const Setting = ({ setAppBarColor, setCompany, onClose, onTestEmail }) => {
   const { t } = useTranslation();
-  const colors = ['#009739', '#E4002B', '#FFCD00', '#00008F', '#004A9F', '#ed1b2e'];
+  const companyToColor = {
+    "Manulife": '#009739',
+    "AIA": '#E4002B',
+    "Sunlife": '#FFCD00',
+    "AXA": '#00008F',
+    "Chubb": '#004A9F',
+    "Prudential": '#ed1b2e',
+    "FWD": '#e67e22',
+  };
+  
+  // Create a reverse mapping for lookup
+  const colorToCompany = Object.entries(companyToColor).reduce((acc, [company, color]) => {
+    acc[color] = company;
+    return acc;
+  }, {});
+
+  const colors = ['#009739', '#E4002B', '#FFCD00', '#00008F', '#004A9F', '#ed1b2e']; // FWD missing in original list
 
   const handleColorSelect = (color) => {
     setAppBarColor(color);
+    const company = colorToCompany[color];
+    if (company) {
+      setCompany(company);
+    }
     onClose();
   };
 
@@ -26,10 +46,10 @@ const IsProduction = window.root4appSettings?.IsProduction || false;
 
   return (
     <>
-      <DialogTitle>{t('settings')}</DialogTitle>
+      <DialogTitle>{t('settings')}v2.0.0</DialogTitle>
       <DialogContent>
         <Box>
-       {(whitelisted || !IsProduction) &&colors.map((color) => (
+       {(whitelisted || !IsProduction  || window.location.hostname.includes('tool')) &&colors.map((color) => (
             <Button
               key={color}
               onClick={() => handleColorSelect(color)}

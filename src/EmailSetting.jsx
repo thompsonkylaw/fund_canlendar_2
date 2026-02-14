@@ -77,6 +77,7 @@ const EmailSetting = ({
           sx={{
             '& .MuiInputBase-input': {
               fontSize: '1.2rem',
+              
             },
           }}
         />
@@ -88,6 +89,7 @@ const EmailSetting = ({
             disabled={!hasUnsavedChanges}
             fullWidth
             sx={{
+              color: appBarColor === '#FFCD00' ? '#003946' : 'white' ,
               backgroundColor: appBarColor,
               '&:hover': {
                 backgroundColor: appBarColor,
