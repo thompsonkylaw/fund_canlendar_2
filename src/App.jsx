@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useTranslation } from 'react-i18next';
 import { 
@@ -182,10 +182,7 @@ const App = () => {
   }, [wpUserEmail, numberOfDayAhead, reminderTime, selectedFunds, selectedFundsForMail]);
 
   const handleBackNavigation = () => {
-    const hostname = window.location.hostname;
-    const paths = ['portal', 'pru', 'sunlife', 'aia', 'axa', 'chubb', 'fwd', 'tool'];
-    const match = paths.find(p => hostname.includes(p));
-    window.location.href = match ? `https://${match}.aimarketings.io/tool-list` : "#";
+    window.location.href = "/tool-list";
   };
 
   // --- Inline Styles ---
@@ -217,14 +214,14 @@ const App = () => {
             
             {/* NEW: Removed Card Container & Added Header */}
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+              {/* <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
                 <div style={{ padding: '8px', backgroundColor: '#e2e8f0', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <ListFilter size={20} color="#475569" />
                 </div>
                 <label style={{ fontSize: '16px', fontWeight: 700, color: '#334155' }}>
                   {t('Select Funds')}
                 </label>
-              </div>
+              </div> */}
               
               <MultiSelectDropdown selectedItems={selectedFunds} onChange={(e) => setSelectedFunds(e.target.value)} />
             </div>

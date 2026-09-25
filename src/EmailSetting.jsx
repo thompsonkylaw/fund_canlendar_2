@@ -46,10 +46,20 @@ const EmailSetting = ({
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+    <div style={{ 
+      display: 'flex', 
+      flexDirection: 'column', 
+      gap: '16px',
+      // Outer card style
+      backgroundColor: '#ffffff',
+      borderRadius: '16px',
+      padding: '24px',
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+      border: '1px solid #e2e8f0'
+    }}>
       {/* Header */}
       <div style={{ marginBottom: '8px' }}>
-        <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#1e293b', margin: 0 }}>
+        <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#1e293b', margin: 0, textShadow: '0 1px 2px rgba(0,0,0,0.1)' }}>
           {t('emailSetting.title')}
         </h3>
       </div>

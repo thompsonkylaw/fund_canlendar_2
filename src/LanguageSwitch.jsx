@@ -37,7 +37,17 @@ function LanguageSwitch({ setAppBarColor, setCompany, appBarColor, onTestEmail }
 
   return (
     <>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+      <div style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        gap: '12px',
+        // Optional card styling if needed
+        backgroundColor: '#ffffff',
+        padding: '8px',
+        borderRadius: '16px',
+        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+        border: '1px solid #e2e8f0'
+      }}>
         
         {/* Toggle Switch Container */}
         <div style={{ 
@@ -45,7 +55,8 @@ function LanguageSwitch({ setAppBarColor, setCompany, appBarColor, onTestEmail }
           backgroundColor: '#f1f5f9', 
           padding: '4px', 
           borderRadius: '99px',
-          border: '1px solid #e2e8f0'
+          border: '1px solid #e2e8f0',
+          boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
         }}>
           <button
             onClick={() => handleLanguageChange('zh-HK')}

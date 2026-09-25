@@ -19,17 +19,15 @@ const FundTable = ({
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden mb-4 transition-all">
+    <div style={{ backgroundColor: '#ffffff', borderRadius: '16px', boxShadow: '0 1px 2px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0', overflow: 'hidden', marginBottom: '16px', transition: 'all 0.2s' }}>
       {/* Card Header - Using Inline Styles to Force Colors */}
       <div 
-        style={{ backgroundColor: '#ffffff', borderBottom: '1px solid #f1f5f9' }} 
-        className="p-4 sm:px-6 flex items-center justify-between"
+        style={{ backgroundColor: '#ffffff', borderBottom: '1px solid #f1f5f9', padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }} 
       >
-        <div className="flex items-center gap-4">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <button
             onClick={() => onCheckboxChange(fund.name, !isChecked)}
-            style={{ backgroundColor: 'transparent', border: 'none', cursor: 'pointer', outline: 'none' }}
-            className="flex items-center group"
+            style={{ backgroundColor: 'transparent', border: 'none', cursor: 'pointer', outline: 'none', display: 'flex', alignItems: 'center', gap: '16px' }}
           >
             <div 
               style={{ 
@@ -54,9 +52,8 @@ const FundTable = ({
             {/* FORCE TEXT COLOR HERE */}
             <span 
               style={{ 
-                marginLeft: '12px', 
                 fontWeight: '700', 
-                fontSize: '1.125rem', 
+                fontSize: '18px', 
                 color: '#1e293b', // Explicit slate-800
                 backgroundColor: 'transparent' 
               }}
@@ -90,8 +87,15 @@ const FundTable = ({
       </div>
 
       {/* Collapsible Content */}
-      <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isExpanded ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
-        <div className="overflow-x-auto">
+      <div 
+        style={{ 
+          overflow: 'hidden', 
+          transition: 'all 0.3s ease-in-out', 
+          maxHeight: isExpanded ? '2000px' : '0', 
+          opacity: isExpanded ? 1 : 0 
+        }}
+      >
+        <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #f1f5f9' }}>
@@ -120,7 +124,7 @@ const FundTable = ({
                   <tr
                     key={issue.issue_date}
                     style={{ 
-                      backgroundColor: isPast ? '#0f172a' : '#ffffff', 
+                      backgroundColor: isPast ? '#464646E6' : '#ffffff', 
                       borderBottom: '1px solid #f1f5f9',
                       transition: 'background-color 0.2s'
                     }}
@@ -148,7 +152,7 @@ const FundTable = ({
                         {emailDate?.isSent ? (
                           <CheckCircle2 size={18} color="#22c55e" />
                         ) : (
-                          <Circle size={18} color={isPast ? 'rgba(255,255,255,0.2)' : '#cbd5e1'} />
+                          <Circle size={18} color={isPast ? 'rgba(190, 190, 190, 0.61)' : '#cbd5e1'} />
                         )}
                       </div>
                     </td>
