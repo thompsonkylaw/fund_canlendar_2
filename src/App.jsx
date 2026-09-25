@@ -181,8 +181,11 @@ const App = () => {
     setHasUnsavedChanges(isChanged);
   }, [wpUserEmail, numberOfDayAhead, reminderTime, selectedFunds, selectedFundsForMail]);
 
+  const [leaving, setLeaving] = useState(false);
+
   const handleBackNavigation = () => {
-    window.location.href = "/tool-list";
+    setLeaving(true);
+    setTimeout(() => { window.location.href = "/tool-list"; }, 80);
   };
 
   // --- Inline Styles ---
@@ -196,6 +199,13 @@ const App = () => {
 
   return (
     <div style={styles.wrapper}>
+      {leaving && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, background: 'rgba(255,255,255,0.88)' }}>
+          <div style={{ width: 52, height: 52, border: '5px solid #e2e8f0', borderTopColor: '#64748b', borderRadius: '50%', animation: 'aimspin 0.8s linear infinite' }} />
+          <div style={{ fontWeight: 600, color: '#444', fontFamily: 'Roboto, Helvetica, Arial, sans-serif' }}>{t('returning', '返回中…')}</div>
+          <style>{'@keyframes aimspin { to { transform: rotate(360deg); } }'}</style>
+        </div>
+      )}
       <header style={styles.header}>
         <div style={{ ...styles.container, height: '64px', display: 'flex', alignItems: 'center', gap: '16px' }}>
           <button onClick={handleBackNavigation} style={{ background: 'rgba(0,0,0,0.1)', border: 'none', borderRadius: '50%', padding: '8px', cursor: 'pointer', color: company === 'Sunlife' ? '#003946' : 'white' }}>
