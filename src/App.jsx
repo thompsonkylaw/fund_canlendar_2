@@ -143,7 +143,12 @@ const App = () => {
         const serverURL = IsProduction ? (import.meta.env.VITE_SERVER_URL || 'http://localhost:7003') : 'http://localhost:7003';
         const res = await axios.post(`${serverURL}/getData`, { selectedFunds });
         setOutputData1(res.data);
-      } catch (err) { setError('Failed to fetch data'); }
+        setError(null);
+      } catch (err) {
+        // 唔好留住上一次成功嘅基金數據－過期數字比空白更危險
+        setOutputData1([]);
+        setError(t('fetchFailed', '資料更新失敗，請檢查網絡後重試。'));
+      }
       finally { setLoading(false); }
     }, 300);
     return () => clearTimeout(timer);
@@ -235,6 +240,12 @@ const App = () => {
               
               <MultiSelectDropdown selectedItems={selectedFunds} onChange={(e) => setSelectedFunds(e.target.value)} />
             </div>
+
+            {error && (
+              <div style={{ marginBottom: '16px', padding: '10px 14px', borderRadius: '12px', background: '#fef2f2', border: '1px solid #fecaca', color: '#b91c1c', fontSize: '14px', fontWeight: 700 }}>
+                ⚠️ {error}
+              </div>
+            )}
 
             {loading ? (
               <div style={{ textAlign: 'center', padding: '60px' }}>
