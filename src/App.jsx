@@ -33,6 +33,9 @@ const App = () => {
   const domain = window.root4appSettings?.domain || false;
   const savedCompany = localStorage.getItem('company');
   const savedColor = localStorage.getItem('appBarColor');
+  // WP 注入嘅登入用戶公司（例如 Manulife）
+  const _wpCompanyRaw = window.root12appSettings?.company || '';
+  const wpCompany = companyToColor[_wpCompanyRaw] ? _wpCompanyRaw : null;
 
   let initialCompany, initialColor;
   if (domain) {
@@ -42,10 +45,10 @@ const App = () => {
       "sunlife": "Sunlife", "aia": "AIA", "axa": "AXA", "chubb": "Chubb", "fwd": "FWD"
     };
     const key = Object.keys(domainMap).find(k => lowerCaseDomain.includes(k));
-    initialCompany = domainMap[key] || savedCompany || "Manulife";
+    initialCompany = domainMap[key] || wpCompany || savedCompany || "Manulife";
     initialColor = companyToColor[initialCompany];
   } else {
-    initialCompany = savedCompany || "Manulife";
+    initialCompany = wpCompany || savedCompany || "Manulife";
     initialColor = savedColor || companyToColor[initialCompany];
   }
 
