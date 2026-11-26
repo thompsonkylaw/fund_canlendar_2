@@ -12,6 +12,7 @@ const Setting = ({ setAppBarColor, setCompany, onClose, onTestEmail }) => {
     "Chubb": '#004A9F',
     "Prudential": '#ed1b2e',
     "FWD": '#e67e22',
+    "CTF": '#007A82',
   };
 
   // Create a reverse mapping for lookup
@@ -21,7 +22,7 @@ const Setting = ({ setAppBarColor, setCompany, onClose, onTestEmail }) => {
   }, {});
 
   // FWD color '#e67e22' was missing in original list; kept original list logic
-  const colors = ['#009739', '#E4002B', '#FFCD00', '#00008F', '#004A9F', '#ed1b2e']; 
+  const colors = ['#009739', '#E4002B', '#FFCD00', '#00008F', '#004A9F', '#ed1b2e', '#007A82']; 
 
   const handleColorSelect = (color) => {
     setAppBarColor(color);

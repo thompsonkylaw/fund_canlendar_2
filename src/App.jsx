@@ -22,6 +22,7 @@ const companyToColor = {
   "Chubb": '#004A9F',
   "Prudential": '#ed1b2e',
   "FWD": '#e67e22',
+  "CTF": '#007A82',
 };
 
 const App = () => {
